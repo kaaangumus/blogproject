@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Details</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+  integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous" />
+	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/bootstrap.min.css') }}" />
+	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/panel.css') }}" />
+</head>
+
+<body>
+  <section class="all-content">
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
+      <div class="container">
+        <a href="/panel/home" class="navbar-brand">Blogen</a>
+
+        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+          <ul class="navbar-nav">
+            <li class="nav-item px-2">
+              <a href="/panel/home" class="nav-link">Panel</a>
+            </li>
+          </ul>
+
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown mr-3">
+              <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                <i class="fas fa-user"></i> Hoşgeldiniz {{session["username"]}}
+              </a>
+              <div class="dropdown-menu">
+                <a href="/panel/profile" class="dropdown-item">
+                  <i class="fas fa-user-circle"></i> Profil</a>
+                  </div>
+                </li>
+                <li class="nav-item">
+                  <a href="/logout" class="nav-link">
+                    <i class="fas fa-user-times"></i> Çıkış
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+
+        <!--HEADER-->
+        <header id="main-nav" class="py-2 bg-primary text-white">
+          <div class="container">
+            <div class="row">
+              <div class="col-md-6">
+                <h1>Detaylar</h1>
+              </div>
+            </div>
+          </div>
+        </header>
+        <!--END HEADER-->
+        {% if deta %}
+        <center>
+        <h1>{{deta.title}}</h1>
+        <h4>Kategori:{{deta.cat}}</h4>
+        <p>{{deta.content|safe}}</p>
+        </center>
+        {% else %}
+        <script>alert("Böyle Bir Sayfa Bulunmadı");window.location.href = '/panel/home';</script>
+        {% endif %}
+        <br><br><br><br><br><br><br><br><br><br><br>
+      <!--FOOTER-->
+      <footer id="main-footer" class="bg-dark text-white mt-5 p-5">
+        <div class="container">
+          <div class="row">
+            <div class="col">
+              <p class="lead text-center">
+                Telif Hakkı &copy; <span id="year"></span>
+                NUKE FORCE
+              </p>
+            </div>
+          </div>
+        </div>
+      </footer>
+      <!--END FOOTER-->
+    </body>
+
+    </html>
+		<script src="{{ url_for('static', filename='js/jquery-3.3.1.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+		<script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
+		<script src=" {{ url_for('static', filename='js/js.js') }}> "></script>
+
+    <script>
+      CKEDITOR.replace('editor1');
+    </script>

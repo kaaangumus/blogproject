@@ -1,0 +1,25 @@
+{% if session["logged_in"] == True %}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta http-equiv='X-UA-Compatible' content='IE=edge'>
+    <title>Hesap Silme</title>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
+    <script src='main.js'></script>
+</head>
+<body background="black">
+    {%if no == "admin" %}
+    <script>
+        alert('{{session["username"]}} Kullanıcısı Yöneticidir Silinemez');
+        window.location.href = "/panel/profile/";
+    </script>
+    {% else %}
+        <script>alert('{{session["username"]}} Kullanıcısı Silindi',rank)</script>
+    {% endif %}
+</body>
+</html>
+{% else %}
+{% extends "notfound.html" %}
+{% endif %}

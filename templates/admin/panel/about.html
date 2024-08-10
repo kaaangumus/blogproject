@@ -1,0 +1,111 @@
+
+<head>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<title>Home</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+	integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous" />
+	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/bootstrap.min.css') }}" />
+	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/panel.css') }}" />
+
+</head>
+{% block body %}
+<section class="all-content">
+    <nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
+        <div class="container">
+            <a href="/panel/home" class="navbar-brand">Blogen</a>
+
+            <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="navbarCollapse">
+                <ul class="navbar-nav">
+                    <li class="nav-item px-2">
+                        <a href="/panel/home" class="nav-link active">Panel</a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item dropdown mr-3">
+                        <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                            <i class="fas fa-user"></i> Hoşgeldiniz {{session["username"]}}
+                        </a>
+                        <div class="dropdown-menu">
+                            <a href="/panel/profile" class="dropdown-item">
+                                <i class="fas fa-user-circle"></i> Profil</a>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a href="/logout" class="nav-link">
+                                    <i class="fas fa-user-times"></i> Çıkış
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!--HEADER-->
+            <header id="main-nav" class="py-2 bg-primary text-white">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h1><i class="fas fa-cog"></i> Panel</h1>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!--END HEADER-->
+
+
+            {% from "includes/formhelpers.html" import render_field %}
+
+                
+                <br><br><br>
+            <section id="profile">
+                <div class="container">
+                  <div class="row">
+                    <div class="col-md-9">
+                      <div class="card">
+                        <div class="card-header">
+                          <h4>Editor</h4>
+                        </div>
+                        <div class="card-body">
+                          {% if post and post2 %}
+                          <form method="post" enctype="multipart/form-data">
+                            <div class="form-group">
+                                <label for="name">Başlık</label>
+                                {{ form.title(class="form-control", type="text") }}
+                            </div>
+                            <div class="form-group">
+                                <label for="kat">Kategori</label>
+                                {{ form.cat(class="form-control") }}
+                            </div>
+                            <div class="form-group">
+                                <label for="resim">Resim</label>
+                                <input name="resim" type="file" accept="image/*" capture>
+                            </div>
+                            <div class="form-group">
+                                <label for="textarea">İçerik</label>
+                                {{ form.content(class="form-control", id="editor1") }}
+                            </div>
+                            <button type="submit" class="btn btn-primary" data-toggle="modal">Güncelle</button>
+                        </form>
+                        
+                          {% else %}
+                          <h1>Bir Hata İle Karşılaşıldı</h1>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <script src="{{ url_for('static', filename='js/jquery-3.3.1.min.js') }}"></script>
+                    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+                    <script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
+                    <script src=" {{ url_for('static', filename='js/js.js') }}> "></script>
+            
+                <script>
+                  CKEDITOR.replace('editor1');
+                </script>    
+{% endblock body%}

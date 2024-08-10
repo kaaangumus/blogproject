@@ -1,0 +1,5 @@
+{% if session["logged_in"] == True %}
+{% extends "admin/panel/index.html " %}
+{% else %}
+{% extends "notfound.html" %}
+{% endif %}
