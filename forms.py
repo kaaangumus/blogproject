@@ -14,12 +14,7 @@ class PostForm(FlaskForm):
     title   = StringField('Başlık', validators=[DataRequired(), Length(min=2, max=200)])
     content = TextAreaField('İçerik', validators=[DataRequired()])
     resim   = FileField('Kapak Resmi', validators=[Optional(), FileAllowed(['jpg', 'jpeg', 'png', 'gif'], 'Sadece resim dosyaları!')])
-    cat     = SelectField('Kategori', choices=[
-        ('Teknoloji',    'Teknoloji'),
-        ('Programlama',  'Programlama'),
-        ('Siber Güvenlik', 'Siber Güvenlik'),
-        ('Genel',        'Genel'),
-    ])
+    cat     = SelectField('Kategori', choices=[])
     submit  = SubmitField('Kaydet')
 
 

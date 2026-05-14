@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kategoriler - NF Blog Panel</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+          integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/panel.css') }}">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
+    <div class="container">
+        <a href="/panel/home" class="navbar-brand"><i class="fas fa-shield-alt mr-2"></i>NF Panel</a>
+        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav">
+                <li class="nav-item px-2"><a href="/panel/home" class="nav-link"><i class="fas fa-home mr-1"></i> Yazılar</a></li>
+                <li class="nav-item px-2"><a href="/panel/about/" class="nav-link"><i class="fas fa-user mr-1"></i> Hakkımda</a></li>
+                <li class="nav-item px-2"><a href="/panel/categories" class="nav-link active"><i class="fas fa-folder mr-1"></i> Kategoriler</a></li>
+                <li class="nav-item px-2"><a href="/panel/settings" class="nav-link"><i class="fas fa-cog mr-1"></i> Ayarlar</a></li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a href="/logout" class="nav-link text-danger"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Flash Mesajları -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<!-- Header -->
+<header class="py-3 bg-primary text-white">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0"><i class="fas fa-folder-open mr-2"></i>Kategori Yönetimi</h1>
+        <button class="btn btn-light btn-sm" data-toggle="modal" data-target="#addCategoryModal">
+            <i class="fas fa-plus mr-1"></i> Yeni Kategori
+        </button>
+    </div>
+</header>
+
+<!-- Categories Table -->
+<section class="py-4">
+    <div class="container">
+        <div class="card shadow-sm">
+            <div class="card-header"><h5 class="mb-0">Mevcut Kategoriler</h5></div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Kategori Adı</th>
+                            <th class="text-right">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for cat in categories %}
+                        <tr>
+                            <td>{{ cat.id }}</td>
+                            <td>{{ cat.name }}</td>
+                            <td class="text-right">
+                                <a href="/panel/categories/delete/{{ cat.id }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Emin misiniz?')">
+                                    <i class="fas fa-trash"></i> Sil
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Yeni Kategori Ekle</h5>
+                <button class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Kategori Adı <span class="text-danger">*</span></label>
+                        <input type="text" name="cat_name" class="form-control" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Ekle</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='/js/jquery-3.3.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='/js/bootstrap.min.js') }}"></script>
+</body>
+</html>
