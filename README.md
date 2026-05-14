@@ -1,5 +1,7 @@
 # NF Blog - Modern Flask Blog Application
 
+> Status: Completed learning project. This repository is kept public as a finished Flask practice project and is no longer actively maintained.
+
 NF Blog, siber güvenlik uzmanları, geliştiriciler ve teknoloji tutkunları için tasarlanmış, modern ve güvenli bir **Python/Flask** blog uygulamasıdır. Proje, amatör veya başlangıç seviyesindeki bir Flask altyapısının sektör standartlarında **SQLAlchemy**, **Bcrypt** ve **Flask-Login** gibi modern pratiklerle tamamen yeniden yazılmış ve profesyonel hale getirilmiş halidir.
 
 ## 🚀 Özellikler
