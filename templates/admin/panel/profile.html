@@ -1,174 +1,147 @@
-{% if session["logged_in"] == True %}
 <!DOCTYPE html>
-<html>
-
+<html lang="tr">
 <head>
-  <meta charset="utf-8" />
-  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Profile</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
-  integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous" />
-	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/bootstrap.min.css') }}" />
-	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/panel.css') }}" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Profil - NF Blog Panel</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+          integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/panel.css') }}">
 </head>
-
 <body>
-  <section class="all-content">
-    <nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
-      <div class="container">
-        <a href="/" class="navbar-brand">NF PANEL</a>
 
-        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-
-        <div class="collapse navbar-collapse" id="navbarCollapse">
-          <ul class="navbar-nav">
-            <li class="nav-item px-2">
-              <a href="/panel/home" class="nav-link">Panel</a>
-            </li>
-          </ul>
-          <ul class="navbar-nav">
-            <li class="nav-item px-2">
-              <a href="/panel/adit" class="nav-link">HSD</a>
-            </li>
-          </ul>
-
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item dropdown mr-3">
-              <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-                <i class="fas fa-user"></i> Hoşgeldiniz {{session["username"]}}
-              </a>
-              <div class="dropdown-menu">
-                <a href="/panel/profile" class="dropdown-item">
-                  <i class="fas fa-user-circle"></i> Profil</a>
-                  </div>
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
+    <div class="container">
+        <a href="/panel/home" class="navbar-brand"><i class="fas fa-shield-alt mr-2"></i>NF Panel</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a href="/panel/home" class="nav-link"><i class="fas fa-home mr-1"></i> Panel</a>
                 </li>
                 <li class="nav-item">
-                  <a href="/logout" class="nav-link">
-                    <i class="fas fa-user-times"></i> Çıkış
-                  </a>
+                    <a href="/logout" class="nav-link text-danger"><i class="fas fa-sign-out-alt"></i> Çıkış</a>
                 </li>
-              </ul>
-            </div>
-          </div>
-        </nav>
-
-        <!--HEADER-->
-        <header id="main-nav" class="py-2 bg-primary text-white">
-          <div class="container">
-            <div class="row">
-              <div class="col-md-6">
-                <h1><i class="fas fa-cog"></i> Profilini Düzenle</h1>
-              </div>
-            </div>
-          </div>
-        </header>
-        <!--END HEADER-->
-
-        <!--ACTIONS-->
-        <section id="actions" class="py-4 mb-4 bg-light">
-          <div class="container">
-            <div class="row">
-              <div class="col-md-3">
-                <a href="/panel/home" class="btn btn-primary btn-block">
-                  <i class="fas fa-arrow-left"></i> Panele Geri Dön
-                </a>
-              </div>
-              <div class="col-md-3">
-                <a href="/panel/profile/delete/" class="btn btn-warning btn-block">
-                  <i class="fas fa-trash"></i> Hesabını Sil
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-        <!--END ACTIONS-->
-        
-        <!-- PROFILE-->
-        <section id="profile">
-          <div class="container">
-            <div class="row">
-              <div class="col-md-9">
-                <div class="card">
-                  <div class="card-header">
-                    <h4>Profilini Düzenle</h4>
-                  </div>
-                  <div class="card-body">
-                    {% from "includes/formhelpers.html" import render_field %}
-                    {% if form %}
-                    <form method="POST" enctype="multipart/form-data">
-                      <div class="form-group">
-                        {{render_field(form.uname,class="form-control",type="text")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.email,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.passwd,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.ozet,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.tw,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.li,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.gh,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        {{render_field(form.st,class="form-control")}}
-                      </div>
-                      <div class="form-group">
-                        <label for="resim">Profil Resmi :</label>
-                        <input name="resim" type="file" accept="image/*" capture>
-                    </div>
-                      <input class="btn btn-primary" data-toggle="modal" type="submit" value="Değiştir" />
-                    </form>
-                    {% else %}
-                    {% extends "notfound.html" %}
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- END PROFILE-->
-      </section>
- 
-      <!--FOOTER-->
-      <footer id="main-footer" class="bg-dark text-white mt-5 p-5">
-        <div class="container">
-          <div class="row">
-            <div class="col">
-              <p class="lead text-center">
-                Telif Hakkı &copy; <span id="year"></span>
-                NUKE FORCE
-              </p>
-            </div>
-          </div>
+            </ul>
         </div>
-      </footer>
-      <!--END FOOTER-->
-    </body>
+    </div>
+</nav>
 
-    </html>
-		<script src="{{ url_for('static', filename='js/jquery-3.3.1.min.js') }}"></script>
-		<script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
-		<script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
-		<script src=" {{ url_for('static', filename='js/js.js') }}> "></script>
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
-    <script>
-      CKEDITOR.replace('editor1');
-    </script>
-    {% else %}
-{% extends "notfound.html" %}
-{% endif %}
+<header class="py-3 bg-primary text-white">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0"><i class="fas fa-user-edit mr-2"></i>Profil Düzenle</h1>
+        <a href="/panel/home" class="btn btn-light btn-sm"><i class="fas fa-arrow-left mr-1"></i> Geri</a>
+    </div>
+</header>
 
+<section class="py-4">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-3 mb-4">
+                <div class="card text-center p-3 shadow-sm">
+                    {% if current_user.pp %}
+                        <img src="{{ url_for('static', filename='assets/images/' + current_user.pp) }}"
+                             class="rounded-circle mx-auto mb-3" style="width:100px;height:100px;object-fit:cover;" alt="Profil">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary mx-auto mb-3 d-flex align-items-center justify-content-center"
+                             style="width:100px;height:100px;">
+                            <i class="fas fa-user fa-2x text-white"></i>
+                        </div>
+                    {% endif %}
+                    <h5 class="mb-0">{{ current_user.username }}</h5>
+                    <small class="text-muted">{{ current_user.email }}</small>
+                    <hr>
+                    <small class="text-muted">{{ current_user.rank | upper }}</small>
+                </div>
+            </div>
 
+            <div class="col-md-9">
+                <div class="card shadow-sm">
+                    <div class="card-header"><h5 class="mb-0">Bilgilerini Güncelle</h5></div>
+                    <div class="card-body">
+                        <form method="POST" enctype="multipart/form-data">
+                            {{ form.hidden_tag() }}
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label>{{ form.username.label.text }}</label>
+                                    {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
+                                    {% for e in form.username.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label>{{ form.email.label.text }}</label>
+                                    {{ form.email(class="form-control" + (" is-invalid" if form.email.errors else "")) }}
+                                    {% for e in form.email.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ form.password.label.text }}</label>
+                                {{ form.password(class="form-control", placeholder="Değiştirmek istemiyorsanız boş bırakın") }}
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ form.ozet.label.text }}</label>
+                                {{ form.ozet(class="form-control", rows="3", placeholder="Kendiniz hakkında kısa bir özet") }}
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label><i class="fab fa-twitter mr-1"></i> {{ form.tw.label.text }}</label>
+                                    {{ form.tw(class="form-control" + (" is-invalid" if form.tw.errors else ""), placeholder="https://twitter.com/kullanici") }}
+                                    {% for e in form.tw.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label><i class="fab fa-linkedin mr-1"></i> {{ form.li.label.text }}</label>
+                                    {{ form.li(class="form-control" + (" is-invalid" if form.li.errors else ""), placeholder="https://linkedin.com/in/kullanici") }}
+                                    {% for e in form.li.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label><i class="fab fa-github mr-1"></i> {{ form.gh.label.text }}</label>
+                                    {{ form.gh(class="form-control" + (" is-invalid" if form.gh.errors else ""), placeholder="https://github.com/kullanici") }}
+                                    {% for e in form.gh.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label><i class="fab fa-stack-overflow mr-1"></i> {{ form.st.label.text }}</label>
+                                    {{ form.st(class="form-control" + (" is-invalid" if form.st.errors else ""), placeholder="https://stackoverflow.com/users/...") }}
+                                    {% for e in form.st.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label>{{ form.pp.label.text }}</label>
+                                {{ form.pp(class="form-control-file") }}
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save mr-1"></i> Güncelle
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script src="{{ url_for('static', filename='/js/jquery-3.3.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='/js/bootstrap.min.js') }}"></script>
+</body>
+</html>

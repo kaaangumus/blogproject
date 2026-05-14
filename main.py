@@ -1,373 +1,275 @@
-from flask import Flask,render_template,url_for,request,redirect,session,logging
-from flask_mysqldb import MySQL
-from wtforms import Form,StringField,PasswordField,TextAreaField,SelectField,validators, SubmitField
-from flask_wtf.file import FileField, FileAllowed
-from wtforms.validators import DataRequired, Email, URL
-from passlib.hash import sha256_crypt
-from werkzeug.utils import secure_filename
 import os
 import uuid
 
+from flask import Flask, render_template, url_for, request, redirect, flash, abort
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_bcrypt import Bcrypt
+from flask_wtf.csrf import CSRFProtect
 
+from config import Config
+from models import db, User, Post, About, Setting
+from forms import LoginForm, PostForm, ProfileForm, AboutForm
 
+# ─────────────────────────── App & Extensions ────────────────────────────────
 app = Flask(__name__)
-app.secret_key = "super secret key"
+app.config.from_object(Config)
 
-app.config["MYSQL_HOST"] = "localhost"
-app.config["MYSQL_USER"] = "root"
-app.config["MYSQL_PASSWORD"] = ""
-app.config["MYSQL_DB"] = "veritabanı"
-app.config["MYSQL_CURSORCLASS"] = "DictCursor"
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-
-  
-
-mysql = MySQL(app)
-
-class Login(Form):
-    username = StringField("Kullanıcı Adı")
-    password = PasswordField("Parola")
-
-class Editor(Form):
-    title = StringField("Başlık")
-    content = TextAreaField("İçerik")
-    resim = FileField("Resim", validators=[FileAllowed(['jpg', 'jpeg', 'png'])])
-    cat = SelectField('Kategori', choices=[("",""),('Teknoloji', 'Teknoloji'), ('Programlama', 'Programlama'), ('Siber Güvenlik', 'Siber Güvenlik')])
-
-class Profile(Form):
-    uname = StringField("Kullanıcı Adı")
-    email = StringField("E-Mail")
-    passwd = PasswordField("Parola")
-    ozet = TextAreaField("Özet Hakkımızda")
-    tw = StringField("Twitter", validators=[URL()])
-    li = StringField("Linkdin", validators=[URL()])
-    gh = StringField("GitHub", validators=[URL()])
-    st = StringField("Stackoverflow", validators=[URL()])
+db.init_app(app)
+bcrypt   = Bcrypt(app)
+csrf     = CSRFProtect(app)
+login_mgr = LoginManager(app)
+login_mgr.login_view         = 'login'
+login_mgr.login_message      = 'Bu sayfaya erişmek için giriş yapmalısınız.'
+login_mgr.login_message_category = 'warning'
 
 
+@login_mgr.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
-@app.route("/")
-def home():    
-    cursor = mysql.connection.cursor()
-    cursor2 = mysql.connection.cursor()
-    sorgu = "Select * from users"
-    sorgu2 = "Select * from posts"
-    result = cursor.execute(sorgu)
-    result2 = cursor2.execute(sorgu2)
-    if result > 0 and result2 > 0 :
-        posted = cursor2.fetchall()
-        ana = cursor.fetchone()
-        return render_template("/main/index.html",ana = ana,posted=posted)
-    else:
-        return render_template("/onfix.html")
 
-@app.route("/panel/posts/<string:id>")
-def details(id):
-    cursor = mysql.connection.cursor()
-    sorgu = "Select * from posts where id = %s"
-    result = cursor.execute(sorgu,(id,))
-    if result > 0:
-        deta = cursor.fetchone()
-        return render_template("/admin/panel/details.html",deta=deta)
-    else :
-        return render_template("/admin/panel/details.html")
-    
-@app.route("/about")
+# ─────────────────────────── Helpers ─────────────────────────────────────────
+ALLOWED_EXT = {'jpg', 'jpeg', 'png', 'gif'}
+
+def save_picture(file_storage):
+    """Uploaded file'ı benzersiz isimle kaydet, dosya adını döndür."""
+    ext = os.path.splitext(file_storage.filename)[1].lower()
+    filename = uuid.uuid4().hex + ext
+    path = os.path.join(app.root_path, app.config['UPLOAD_FOLDER'], filename)
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    file_storage.save(path)
+    return filename
+
+
+# ─────────────────────────── Public Routes ───────────────────────────────────
+@app.route('/')
+def home():
+    ana    = User.query.first()
+    posted = Post.query.order_by(Post.date.desc()).all()
+    if not ana:
+        return render_template('onfix.html')
+    return render_template('main/index.html', ana=ana, posted=posted)
+
+
+@app.route('/post/<int:post_id>')
+def gonderi(post_id):
+    post = Post.query.get_or_404(post_id)
+    ana  = User.query.first()
+    return render_template('main/post.html', post=post, post2=ana)
+
+
+@app.route('/about')
 def about():
-    cursor = mysql.connection.cursor()
-    cursor2 = mysql.connection.cursor()
-    sorgu = "Select * from users"
-    sorgu2 = "Select * from about"
-    result = cursor.execute(sorgu)
-    result2 = cursor2.execute(sorgu2)
-    if result > 0 and result2 > 0:
-        post2 = cursor2.fetchone()
-        post = cursor.fetchone()
-        return render_template("/admin/panel/about.html",post=post,post2=post2)
-    else :
-        return redirect(url_for("home"))
-
-@app.route("/adit")
-def adit():
-    if request.method == "GET":
-        cursor  = mysql.connection.cursor()
-        sorgu = "Select * from about"
-        result = cursor.execute(sorgu)
-        if result == 0 :
-            return redirect(url_for("admin"))
-        else: 
-            posts = cursor.fetchone()
-            form = Editor()
-            form.title.data = posts["hk"]
-            form.content.data = posts["hkm"]
-            form.cat.data = posts["cat"]
-            return render_template("admin/panel/update.html",form = form)
-    else :
-        form = Editor(request.form)
-        NewT = form.title.data 
-        NewC = form.content.data
-        NewK = form.cat.data
-        NewF = request.files["resim"]
-        if NewF.filename == '':
-            sorgu2 = "Update posts  Set title = %s , content = %s , cat = %s  where id = %s"
-            cursor = mysql.connection.cursor()
-            cursor.execute(sorgu2,(NewT,NewC,NewK,id))
-            mysql.connection.commit()
-            return redirect(url_for("admin"))
-        else:
-            resim = str(uuid.uuid4()) + os.path.splitext(NewF.filename)[1]
-            NewF.save(os.path.join(app.root_path, "static/assets/images", resim))
-            sorgu2 = "Update posts  Set title = %s , content = %s , cat = %s , resim = %s where id = %s"
-            cursor = mysql.connection.cursor()
-            cursor.execute(sorgu2,(NewT,NewC,NewK,resim,id))
-            mysql.connection.commit()
-            return redirect(url_for("admin"))
+    ana        = User.query.first()
+    about_info = About.query.first()
+    if not ana or not about_info:
+        return redirect(url_for('home'))
+    return render_template('main/about.html', post=ana, post2=about_info)
 
 
-@app.route("/post/<string:id>")
-def gonderi(id):
-    cursor = mysql.connection.cursor()
-    cursor2 = mysql.connection.cursor()
-    sorgu = "Select * from posts where id = %s"
-    sorgu2 = "Select * from users"
-    result = cursor.execute(sorgu,(id,))
-    result2 = cursor2.execute(sorgu2)
-    if result > 0 and result2 > 0:
-        post2 = cursor2.fetchone()
-        post = cursor.fetchone()
-        return render_template("/main/post.html",post=post,post2=post2)
-    else :
-        return redirect(url_for("home"))
-
-@app.route("/panel/home")
-def admin():
-    cursor = mysql.connection.cursor()
-    sorgu = "Select * from posts where id "
-    result = cursor.execute(sorgu)
-    if result > 0 :
-        posts = cursor.fetchall()
-        return render_template("admin/panel/index.html",posts = posts)
-    else:
-        return render_template("admin/main.html")
-
-
-
-@app.route("/panel/edit/<string:id>" , methods=["POST","GET"])
-def edit(id):
-    if request.method == "GET":
-        cursor  = mysql.connection.cursor()
-        sorgu = "Select * from posts where id  = %s "
-        result = cursor.execute(sorgu,(id,))
-        if result == 0 :
-            return redirect(url_for("admin"))
-        else: 
-            posts = cursor.fetchone()
-            form = Editor()
-            form.title.data = posts["title"]
-            form.content.data = posts["content"]
-            form.cat.data = posts["cat"]
-            return render_template("admin/panel/update.html",form = form)
-    else :
-        form = Editor(request.form)
-        NewT = form.title.data 
-        NewC = form.content.data
-        NewK = form.cat.data
-        NewF = request.files["resim"]
-        if NewF.filename == '':
-            sorgu2 = "Update posts  Set title = %s , content = %s , cat = %s  where id = %s"
-            cursor = mysql.connection.cursor()
-            cursor.execute(sorgu2,(NewT,NewC,NewK,id))
-            mysql.connection.commit()
-            return redirect(url_for("admin"))
-        else:
-            resim = str(uuid.uuid4()) + os.path.splitext(NewF.filename)[1]
-            NewF.save(os.path.join(app.root_path, "static/assets/images", resim))
-            sorgu2 = "Update posts  Set title = %s , content = %s , cat = %s , resim = %s where id = %s"
-            cursor = mysql.connection.cursor()
-            cursor.execute(sorgu2,(NewT,NewC,NewK,resim,id))
-            mysql.connection.commit()
-            return redirect(url_for("admin"))
-
-
-
-@app.route("/panel/ekle/", methods=["GET","POST"])
-def ekle():
-    cursor  = mysql.connection.cursor()
-    if request.method == "POST":
-        YeniT = request.form['baslik']
-        YeniC= request.form['icerik']
-        YeniK = request.form['kategori']
-        NewF = request.files["resim"]
-        if NewF.filename == '':
-            sorgu2 = "INSERT INTO posts  Set title = %s , content = %s , cat = %s"
-            cursor = mysql.connection.cursor()
-            cursor.execute(sorgu2,(YeniT,YeniC,YeniK))
-            mysql.connection.commit()
-            return redirect(url_for("admin"))
-        else:
-            resim = str(uuid.uuid4()) + os.path.splitext(NewF.filename)[1]
-            NewF.save(os.path.join(app.root_path, "static/assets/images", resim))
-            sorgu2 = "INSERT INTO posts  Set title = %s , content = %s , cat = %s , resim = %s"
-            cursor = mysql.connection.cursor()
-            cursor.execute(sorgu2,(YeniT,YeniC,YeniK,resim))
-            mysql.connection.commit()
-            return redirect(url_for("admin"))
-            
-    else:
-        return "<script>alert('Eklenemedi');window.location.href = '/panel/home';</script>"
-
-
-@app.route("/panel/profile/delete/")
-def pdelete():
-    id = session["username"]
-    cursor = mysql.connection.cursor()
-    sorgu = "SELECT rank FROM users WHERE username = %s"
-    result = cursor.execute(sorgu,(id,))
-    if result > 0:
-        rank = cursor.fetchone()
-        if rank != "admin":
-            no = "admin"
-            return render_template("/admin/panel/pdelete.html",no=no)
-        else:
-            return render_template("/admin/panel/pdelete.html",rank=rank)
-    else :
-        return render_template("/admin/panel/profile.html")
-    
-
-@app.route("/panel/profile/", methods=["GET", "POST"])
-def phome():
-    if request.method == "GET":
-        curs1 = mysql.connection.cursor()
-        sorgu = "SELECT * FROM users WHERE username = %s"
-        result = curs1.execute(sorgu, (session["username"],))
-        if result == 0:
-            return redirect(url_for("admin"))
-        else:
-            posts = curs1.fetchone()
-            form = Profile()
-            form.uname.data = posts["username"]
-            form.email.data = posts["email"]
-            form.passwd.data = posts["password"]
-            form.ozet.data = posts["ozet"]
-            form.tw.data = posts["tw"]
-            form.li.data = posts["li"]
-            form.gh.data = posts["gh"]
-            form.st.data = posts["st"]
-            return render_template("/admin/panel/profile.html", form=form)
-    else:
-        form = Profile(request.form)
-        NewT = form.uname.data
-        NewC = form.email.data
-        NewK = form.passwd.data
-        NewF = request.files["resim"]
-        resim = str(uuid.uuid4()) + os.path.splitext(NewF.filename)[1]
-        NewF.save(os.path.join(app.root_path, "static/assets/images", resim))
-        Func1 = form.ozet.data
-        Func2 = form.tw.data
-        Func3 = form.li.data
-        Func4 = form.gh.data
-        Func5 = form.st.data
-        if NewF.filename == '':
-        # Resim yüklenmediği için sadece diğer alanları güncelle
-            if NewK == "":
-                sorgu2 = "UPDATE users SET username = %s, email = %s, ozet = %s, tw = %s, li = %s, gh = %s, st = %s WHERE username = %s"
-                curs3 = mysql.connection.cursor()
-                curs3.execute(sorgu2, (NewT, NewC, Func1, Func2, Func3, Func4, Func5, session["username"]))
-                mysql.connection.commit()
-                session["username"] = form.uname.data
-                return redirect(url_for("phome"))
-            else:
-                sorgu2 = "UPDATE users SET username = %s, email = %s, password = %s, ozet = %s, tw = %s, li = %s, gh = %s, st = %s WHERE username = %s"
-                curs2 = mysql.connection.cursor()
-                curs2.execute(sorgu2, (NewT, NewC, NewK, Func1, Func2, Func3, Func4, Func5, session["username"]))
-                mysql.connection.commit()
-                session["username"] = form.uname.data
-                return redirect(url_for("phome"))
-        else:
-            resim = str(uuid.uuid4()) + os.path.splitext(NewF.filename)[1]
-            NewF.save(os.path.join(app.root_path, "static/assets/images", resim))
-            sorgu2 = "UPDATE users SET username = %s, email = %s, password = %s, ozet = %s, tw = %s, li = %s, gh = %s, st = %s, pp = %s WHERE username = %s"
-            curs2 = mysql.connection.cursor()
-            curs2.execute(sorgu2, (NewT, NewC, NewK, Func1, Func2, Func3, Func4, Func5, resim, session["username"]))
-            mysql.connection.commit()
-            session["username"] = form.uname.data
-            return redirect(url_for("phome"))
-
-@app.route("/panel/profile/<string:id>")
-def profile(id):
-    cursor = mysql.connection.cursor()
-    sorgu = "Select * from users where id = %s "
-    result = cursor.execute(sorgu,(id,))
-    if result > 0:
-        users = cursor.fetchone()
-        return render_template("/admin/panel/profile.html",users=users)
-    else :
-        return render_template("/admin/panel/profile.html")
-
-@app.route("/panel/ayarlar")
-def ayar():
-    cursor = mysql.connection.cursor()
-    sorgu = "Select * from ayar"
-    result = cursor.execute(sorgu)
-    if result > 0:
-        ayar = cursor.fetchone()
-        return render_template("/admin/panel/ayar.html",ayar=ayar)
-    else: 
-        return render_template("/admin/panel/ayar.html")
-@app.route("/login", methods=["GET","POST"])
+# ─────────────────────────── Auth Routes ─────────────────────────────────────
+@app.route('/login', methods=['GET', 'POST'])
 def login():
-    form = Login(request.form)
-    if request.method == "POST":
-        session["logged_in"] = False
-        username = form.username.data
-        password = form.password.data
-        cursor = mysql.connection.cursor()
-        sorgu = "Select * from users where username = %s "
-        result = cursor.execute(sorgu,(username,))
-        if result > 0:
-            data = cursor.fetchone()
-            real_password = data["password"]
-            if real_password == password:
-                session["logged_in"] = True
-                session["username"] = username
-                return redirect(url_for("admin"))
-            else:
-                pass
-        else:
-            pass 
-    return render_template("/admin/index.html",form=form)
+    if current_user.is_authenticated:
+        return redirect(url_for('admin'))
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            login_user(user)
+            flash('Hoş geldiniz!', 'success')
+            nxt = request.args.get('next')
+            return redirect(nxt or url_for('admin'))
+        flash('Kullanıcı adı veya parola yanlış.', 'danger')
+    return render_template('admin/index.html', form=form)
 
-@app.route("/logout")
+
+@app.route('/logout')
+@login_required
 def logout():
-    session.clear()
-    return redirect(url_for("home"))
+    logout_user()
+    flash('Çıkış yapıldı.', 'info')
+    return redirect(url_for('home'))
 
 
-@app.errorhandler(404)
-def page_not_found(error):
-    return render_template("notfound.html"),404
+# ─────────────────────────── Admin Routes ────────────────────────────────────
+@app.route('/panel/home')
+@login_required
+def admin():
+    posts = Post.query.order_by(Post.date.desc()).all()
+    return render_template('admin/panel/index.html', posts=posts)
 
-@app.route("/delete/<string:id>")
-def delete(id):
-    try:
-        if session["logged_in"] == True :
-            cursor = mysql.connection.cursor()
-            sorgu = "Select * from posts where id = %s"
-            result = cursor.execute(sorgu,(id,))
-            if result > 0 :
-                sorgu2 = "Delete from posts where id = %s "
-                cursor.execute(sorgu2,(id,))
-                mysql.connection.commit()
-                return redirect(url_for("admin"))
-            else: 
-                return redirect(url_for("home"))
-    
+
+@app.route('/panel/ekle/', methods=['GET', 'POST'])
+@login_required
+def ekle():
+    form = PostForm()
+    if form.validate_on_submit():
+        resim_fn = ''
+        if form.resim.data and form.resim.data.filename:
+            resim_fn = save_picture(form.resim.data)
+        post = Post(
+            title   = form.title.data,
+            content = form.content.data,
+            cat     = form.cat.data,
+            resim   = resim_fn,
+        )
+        db.session.add(post)
+        db.session.commit()
+        flash('Yazı başarıyla eklendi!', 'success')
+        return redirect(url_for('admin'))
+    # GET veya hata → panele yönlendir (modal üzerinden)
+    return redirect(url_for('admin'))
+
+
+@app.route('/panel/edit/<int:post_id>', methods=['GET', 'POST'])
+@login_required
+def edit(post_id):
+    post = Post.query.get_or_404(post_id)
+    form = PostForm()
+    if form.validate_on_submit():
+        post.title   = form.title.data
+        post.content = form.content.data
+        post.cat     = form.cat.data
+        if form.resim.data and form.resim.data.filename:
+            post.resim = save_picture(form.resim.data)
+        db.session.commit()
+        flash('Yazı güncellendi!', 'success')
+        return redirect(url_for('admin'))
+    # Pre-fill
+    form.title.data   = post.title
+    form.content.data = post.content
+    form.cat.data     = post.cat
+    return render_template('admin/panel/update.html', form=form, post=post)
+
+
+@app.route('/delete/<int:post_id>')
+@login_required
+def delete(post_id):
+    post = Post.query.get_or_404(post_id)
+    db.session.delete(post)
+    db.session.commit()
+    flash('Yazı silindi.', 'info')
+    return redirect(url_for('admin'))
+
+
+@app.route('/panel/profile/', methods=['GET', 'POST'])
+@login_required
+def phome():
+    form = ProfileForm()
+    user = current_user
+    if form.validate_on_submit():
+        # Profil fotoğrafı
+        if form.pp.data and form.pp.data.filename:
+            user.pp = save_picture(form.pp.data)
+        user.username = form.username.data
+        user.email    = form.email.data
+        if form.password.data:
+            user.password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        user.ozet = form.ozet.data or ''
+        user.tw   = form.tw.data   or '#'
+        user.li   = form.li.data   or '#'
+        user.gh   = form.gh.data   or '#'
+        user.st   = form.st.data   or '#'
+        db.session.commit()
+        flash('Profil güncellendi!', 'success')
+        return redirect(url_for('phome'))
+    # GET → pre-fill
+    form.username.data = user.username
+    form.email.data    = user.email
+    form.ozet.data     = user.ozet
+    form.tw.data       = user.tw if user.tw != '#' else ''
+    form.li.data       = user.li if user.li != '#' else ''
+    form.gh.data       = user.gh if user.gh != '#' else ''
+    form.st.data       = user.st if user.st != '#' else ''
+    return render_template('admin/panel/profile.html', form=form)
+
+
+@app.route('/panel/about/', methods=['GET', 'POST'])
+@login_required
+def panel_about():
+    about_info = About.query.first()
+    form = AboutForm()
+    if form.validate_on_submit():
+        if about_info:
+            about_info.hk  = form.hk.data
+            about_info.hkm = form.hkm.data
+            about_info.cat = form.cat.data
         else:
-            return render_template("notfound.html")
-    except:
-        return render_template("notfound.html")
+            about_info = About(hk=form.hk.data, hkm=form.hkm.data, cat=form.cat.data)
+            db.session.add(about_info)
+        db.session.commit()
+        flash('Hakkımda sayfası güncellendi!', 'success')
+        return redirect(url_for('panel_about'))
+    if about_info:
+        form.hk.data  = about_info.hk
+        form.hkm.data = about_info.hkm
+        form.cat.data = about_info.cat
+    return render_template('admin/panel/about_edit.html', form=form)
 
 
-if __name__ == "__main__":
-    app.run(debug=True)
+@app.route('/panel/details/<int:post_id>')
+@login_required
+def details(post_id):
+    post = Post.query.get_or_404(post_id)
+    return render_template('admin/panel/details.html', deta=post)
+
+
+# ─────────────────────────── Error Handlers ──────────────────────────────────
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('notfound.html'), 404
+
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template('notfound.html'), 500
+
+
+# ─────────────────────────── DB Init & Run ───────────────────────────────────
+def init_db():
+    """Veritabanı tablolarını oluştur ve yoksa admin kullanıcısı ekle."""
+    db.create_all()
+
+    if not User.query.first():
+        hashed = bcrypt.generate_password_hash('admin123').decode('utf-8')
+        admin  = User(
+            username = 'admin',
+            email    = 'admin@nfblog.com',
+            password = hashed,
+            rank     = 'admin',
+            ozet     = 'Penetration Tester | Red Teamer',
+            tw       = '#',
+            li       = '#',
+            gh       = 'https://github.com/kaaangumus',
+            st       = '#',
+        )
+        db.session.add(admin)
+        db.session.commit()
+        print('[NF Blog] Admin kullanicisi olusturuldu -> admin / admin123')
+
+    if not About.query.first():
+        about = About(
+            hk  = 'Hakkimda',
+            hkm = 'Bu sayfayi duzenlemek icin panele girin.',
+            cat = 'Genel',
+        )
+        db.session.add(about)
+        db.session.commit()
+
+    if not Setting.query.first():
+        setting = Setting(
+            title    = 'NF Blog',
+            content  = 'Siber Guvenlik & Programlama',
+            content2 = 'NF Blog',
+        )
+        db.session.add(setting)
+        db.session.commit()
+
+    print('[NF Blog] Veritabani hazir.')
+
+
+if __name__ == '__main__':
+    with app.app_context():
+        init_db()
+    app.run(debug=True, host='127.0.0.1', port=5000)

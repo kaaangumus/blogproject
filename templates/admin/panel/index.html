@@ -1,299 +1,192 @@
-{% if session["logged_in"] == True %}
 <!DOCTYPE html>
-<html>
-
+<html lang="tr">
 <head>
-	<meta charset="utf-8" />
-	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
-	<title>Home</title>
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
-	integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp" crossorigin="anonymous" />
-	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/bootstrap.min.css') }}" />
-	<link rel="stylesheet" type="text/css" media="screen" href="{{ url_for('static',filename='styles/panel.css') }}" />
-
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Panel - NF Blog</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
+          integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
+          crossorigin="anonymous">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/panel.css') }}">
 </head>
+<body>
 
-{% block body%}
-	<section class="all-content">
-		<nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
-			<div class="container">
-				<a href="/" class="navbar-brand">NF PANEL</a>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-sm navbar-dark bg-dark p-0">
+    <div class="container">
+        <a href="/panel/home" class="navbar-brand"><i class="fas fa-shield-alt mr-2"></i>NF Panel</a>
+        <button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarCollapse">
+            <ul class="navbar-nav">
+                <li class="nav-item px-2">
+                    <a href="/panel/home" class="nav-link active"><i class="fas fa-home mr-1"></i> Yazılar</a>
+                </li>
+                <li class="nav-item px-2">
+                    <a href="/panel/about/" class="nav-link"><i class="fas fa-user mr-1"></i> Hakkımda</a>
+                </li>
+            </ul>
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item dropdown mr-3">
+                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
+                        <i class="fas fa-user"></i> {{ current_user.username }}
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right">
+                        <a href="/panel/profile/" class="dropdown-item">
+                            <i class="fas fa-user-edit mr-1"></i> Profil
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a href="/" class="dropdown-item" target="_blank">
+                            <i class="fas fa-external-link-alt mr-1"></i> Bloğu Gör
+                        </a>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a href="/logout" class="nav-link text-danger">
+                        <i class="fas fa-sign-out-alt"></i> Çıkış
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
 
-				<button class="navbar-toggler" data-toggle="collapse" data-target="#navbarCollapse">
-					<span class="navbar-toggler-icon"></span>
-				</button>
+<!-- Flash Mesajları -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="container mt-3">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} alert-dismissible">
+          {{ message }}
+          <button type="button" class="close" data-dismiss="alert"><span>&times;</span></button>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
 
-				<div class="collapse navbar-collapse" id="navbarCollapse">
-					<ul class="navbar-nav">
-						<li class="nav-item px-2">
-							<a href="/panel/home" class="nav-link active">Panel</a>
-						</li>
-					</ul>
-					<div class="collapse navbar-collapse" id="navbarCollapse">
-						<ul class="navbar-nav">
-							<li class="nav-item px-2">
-								<a href="/adit" class="nav-link active">HSD</a>
-							</li>
-						</ul>
+<!-- Header -->
+<header class="py-3 bg-primary text-white">
+    <div class="container d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0"><i class="fas fa-newspaper mr-2"></i>Yazı Yönetimi</h1>
+        <button class="btn btn-light btn-sm" data-toggle="modal" data-target="#addPostModal">
+            <i class="fas fa-plus mr-1"></i> Yeni Yazı
+        </button>
+    </div>
+</header>
 
-					<ul class="navbar-nav ml-auto">
-						<li class="nav-item dropdown mr-3">
-							<a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown">
-								<i class="fas fa-user"></i> Hoşgeldiniz {{session["username"]}}
-							</a>
-							<div class="dropdown-menu">
-								<a href="/panel/profile" class="dropdown-item">
-									<i class="fas fa-user-circle"></i> Profil</a>
-									<a href="/panel/ayarlar" class="dropdown-item">
-										<i class="fas fa-cog"></i> Ayarlar</a>
-									</div>
-								</li>
-								<li class="nav-item">
-									<a href="/logout" class="nav-link">
-										<i class="fas fa-user-times"></i> Çıkış
-									</a>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</nav>
+<!-- Posts Table -->
+<section class="py-4">
+    <div class="container">
+        {% if posts %}
+        <div class="card shadow-sm">
+            <div class="card-header">
+                <h5 class="mb-0">Yazılar ({{ posts|length }})</h5>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>#</th>
+                            <th>Başlık</th>
+                            <th>Kategori</th>
+                            <th>Tarih</th>
+                            <th class="text-center">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for post in posts %}
+                        <tr>
+                            <td>{{ post.id }}</td>
+                            <td>{{ post.title | truncate(50) }}</td>
+                            <td><span class="badge badge-info">{{ post.cat }}</span></td>
+                            <td>{{ post.date.strftime('%d.%m.%Y') }}</td>
+                            <td class="text-center">
+                                <a href="/post/{{ post.id }}" class="btn btn-sm btn-outline-secondary" target="_blank" title="Görüntüle">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="/panel/edit/{{ post.id }}" class="btn btn-sm btn-outline-primary" title="Düzenle">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="/delete/{{ post.id }}" class="btn btn-sm btn-outline-danger"
+                                   onclick="return confirm('Silmek istediğinize emin misiniz?')" title="Sil">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info text-center py-5">
+            <i class="fas fa-pen-nib fa-3x mb-3 d-block"></i>
+            <h4>Henüz yazı yok</h4>
+            <p>Yeni yazı eklemek için yukarıdaki butona tıklayın.</p>
+        </div>
+        {% endif %}
+    </div>
+</section>
 
-				<!--HEADER-->
-				<header id="main-nav" class="py-2 bg-primary text-white">
-					<div class="container">
-						<div class="row">
-							<div class="col-md-6">
-								<h1><i class="fas fa-cog"></i> Panel</h1>
-							</div>
-						</div>
-					</div>
-				</header>
-				<!--END HEADER-->
+<!-- Footer -->
+<footer class="bg-dark text-white text-center py-3 mt-5">
+    <small>&copy; NF Blog Panel &mdash; {{ current_user.username }}</small>
+</footer>
 
-				<!--ACTIONS-->
-				<section id="actions" class="py-4 mb-4 bg-light">
-					<div class="container">
-						<div class="row">
-							<div class="col-md-3">
-								<a href="#" class="btn btn-primary btn-block" data-toggle="modal" data-target="#addPostModal">
-									<i class="fas fa-plus"></i> Yeni Ekle
-								</a>
-							</div>
-						</div>
-					</div>
-				</section>
-				<!--END ACTIONS-->
-				{% if posts %}
-				<!-- POSTS-->
-				<section id="posts">
-					<div class="container">
-						<div class="row">
-							<div class="col-md-9">		
-								<div class="card">
-									<div class="card-header">
-										<h4>Son Paylaşınlar</h4>
-									</div>
-									<table class="table table-striped">
-										<thead class="thead-dark">
-											<tr>
-												<th>#</th>
-												<th>Başlık</th>
-												<th>Kategori</th>
-												<th>Tarih</th>
-												<th></th>
-												<th></th>
-												<th></th>
-											</tr>
-											<tbody>
-												{% for post in posts %}
-												<tr>
-													<td>{{post.id}}</td>
-													<td>{{post.title}}</td>
-													<td>{{post.cat}}</td>
-													<td>{{post.date}}</td>
-													<td>
-														<a href="/delete/{{post.id}}" class="btn btn-secondary">
-															<i class="fas fa-angle-double-right"></i> Sil
-														</a>
-													</td>
-													<td>
-														<a href="posts/{{post.id}}" class="btn btn-secondary">
-															<i class="fas fa-angle-double-right"></i> Detay
-														</a>
-													</td>
-													<td>
-														<a href="edit/{{post.id}}" class="btn btn-secondary">
-															<i class="fas fa-angle-double-right"></i> Editor
-														</a>
-													</td>
-												</tr>
-												{% endfor %}
-												
-											</tbody>
-										</thead>
-									</table>
-								</div>
-							</div>
-							{% else %}
-						<div class="alert alert-warning">
-							<center>
-							<h1>Makale Yok</h1>
-							</center>
-							{% endif %}
-						</div>
-						</div>
-					</div>
-				</section>
+<!-- ADD POST MODAL -->
+<div class="modal fade" id="addPostModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-plus mr-2"></i>Yeni Yazı Ekle</h5>
+                <button class="close text-white" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <form method="POST" action="{{ url_for('ekle') }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Başlık <span class="text-danger">*</span></label>
+                        <input type="text" name="title" class="form-control" placeholder="Yazı başlığı" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label>Kategori</label>
+                            <select name="cat" class="form-control">
+                                <option value="Teknoloji">Teknoloji</option>
+                                <option value="Programlama">Programlama</option>
+                                <option value="Siber Güvenlik">Siber Güvenlik</option>
+                                <option value="Genel">Genel</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Kapak Resmi</label>
+                            <input type="file" name="resim" class="form-control-file" accept="image/*">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>İçerik <span class="text-danger">*</span></label>
+                        <textarea id="modal_content" name="content" class="form-control" rows="6" required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">İptal</button>
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save mr-1"></i> Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-				<!-- END POSTS-->
-			</section>
-			<!--FOOTER-->
-			<footer id="main-footer" class="bg-dark text-white mt-5 p-5">
-				<div class="container">
-					<div class="row">
-						<div class="col">
-							<p class="lead text-center">
-								Copyright &copy; <span id="year"></span>
-								NUKE FORCE
-							</p>
-						</div>
-					</div>
-				</div>
-			</footer>
-			<!--END FOOTER-->
-
-			<!--MODAL-->
-
-			<!--ADD POST MODAL-->
-			<div class="modal fade" id="addPostModal">
-				<div class="modal-dialog modal-lg">
-					<div class="modal-content">
-						<div class="modal-header bg-primary text-white">
-							<h5 class="modal-title">Ekle</h5>
-							<button class="close" data-dismiss="modal">
-								<span>&times;</span>
-							</button>
-						</div>
-
-						<div class="modal-body">
-							<form method="POST" action="/panel/ekle/" enctype="multipart/form-data">
-								<div class="form-group">
-									<label for="baslik">Başlık</label>
-									<input type="text" name="baslik" class="form-control" />
-								</div>
-								<div class="form-group">
-									<label for="kategori">Kategori</label>
-									<select name="kategori" class="form-control">
-										<option value="" selected>Seç</option>
-										<option value="Teknoloji">Teknoloji</option>
-										<option value="Programlama">Programlama</option>
-										<option value="Genel">Genel</option>
-										<option value="Diğer">Diğer</option>
-									</select>
-								</div>
-								<div class="form-group">
-									<label for="resim">Resim</label>
-									<input name="resim" type="file" accept="image/*" capture>
-								</div>
-								<div class="form-group" >
-									<label for="icerik">İçerik</label>
-									<textarea name="icerik" class="form-control"></textarea>
-								</div>
-								<div class="modal-footer">
-									<button type="submit" class="btn btn-primary" data-toggle="modal">
-										Kaydet
-									</button>
-								</div>
-							</form>
-						
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<!--END ADD POST MODAL-->
-
-			<!-- ADD CATEGORY MODAL-->
-			<div class="modal fade" id="addCategoryModal">
-				<div class="modal-dialog modal-lg">
-					<div class="modal-content">
-						<div class="modal-header bg-success text-white">
-							<h5 class="modal-title">Add Category</h5>
-							<button class="close" data-dismiss="modal">
-								<span>&times;</span>
-							</button>
-						</div>
-						<div class="modal-body">
-							<form>
-								<div class="form-group">
-									<label for="title">Title</label>
-									<input type="text" class="form-control" />
-								</div>
-							</form>
-						</div>
-						<div class="modal-footer">
-							<button class="btn btn-success" data-toggle="modal">
-								Save Changes
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- END ADD CATEGORY MODAL-->
-
-			<!--ADD USER MODAL-->
-			<div class="modal fade" id="addUserModal">
-				<div class="modal-dialog modal-lg">
-					<div class="modal-content">
-						<div class="modal-header bg-warning text-white">
-							<h5 class="modal-title">Add User</h5>
-							<button class="close" data-dismiss="modal">
-								<span>&times;</span>
-							</button>
-						</div>
-						<div class="modal-body">
-							<form>
-								<div class="form-group">
-									<label for="name">Name</label>
-									<input type="text" class="form-control" />
-								</div>
-								<div class="form-group">
-									<label for="email">Email</label>
-									<input type="email" class="form-control" />
-								</div>
-								<div class="form-group">
-									<label for="password">Password</label>
-									<input type="password" class="form-control" />
-								</div>
-								<div class="form-group">
-									<label for="confirmPasdword">Confirm Password</label>
-									<input type="password" class="form-control" />
-								</div>
-							</form>
-						</div>
-						<div class="modal-footer">
-							<button class="btn btn-warning" data-toggle="modal">
-								Save Changes
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- END USER MODAL-->
-
-			<!--END MODAL-->
-		{% endblock body %}
-
-		</html>
-		<script src="{{ url_for('static', filename='/js/jquery-3.3.1.min.js') }}"></script>
-		<script src="{{ url_for('static', filename='/js/bootstrap.min.js') }}"></script>
-		<script src=" {{ url_for('static', filename='/js/js.js') }}> "></script>
-		<script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
-		<script>
-
-			CKEDITOR.replace('icerik');
-		</script>
-		{% else %}
-		{% extends "notfound.html" %}
-		{% endif %}
+<script src="{{ url_for('static', filename='/js/jquery-3.3.1.min.js') }}"></script>
+<script src="{{ url_for('static', filename='/js/bootstrap.min.js') }}"></script>
+<script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
+<script>
+    if (document.getElementById('modal_content')) {
+        CKEDITOR.replace('modal_content');
+    }
+</script>
+</body>
+</html>

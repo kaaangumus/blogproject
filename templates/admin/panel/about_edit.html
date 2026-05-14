@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Yazı Düzenle - NF Blog Panel</title>
+    <title>Hakkımda Düzenle - NF Blog Panel</title>
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.13/css/all.css"
           integrity="sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp"
           crossorigin="anonymous">
@@ -17,6 +17,7 @@
         <a href="/panel/home" class="navbar-brand"><i class="fas fa-shield-alt mr-2"></i>NF Panel</a>
         <div class="collapse navbar-collapse">
             <ul class="navbar-nav ml-auto">
+                <li class="nav-item"><a href="/panel/home" class="nav-link"><i class="fas fa-home mr-1"></i> Panel</a></li>
                 <li class="nav-item"><a href="/logout" class="nav-link text-danger"><i class="fas fa-sign-out-alt"></i> Çıkış</a></li>
             </ul>
         </div>
@@ -38,13 +39,8 @@
 
 <header class="py-3 bg-primary text-white">
     <div class="container d-flex justify-content-between align-items-center">
-        <h1 class="h3 mb-0">
-            <i class="fas fa-edit mr-2"></i>
-            Yazı Düzenle{% if post %}: {{ post.title | truncate(40) }}{% endif %}
-        </h1>
-        <a href="/panel/home" class="btn btn-light btn-sm">
-            <i class="fas fa-arrow-left mr-1"></i> Panele Dön
-        </a>
+        <h1 class="h3 mb-0"><i class="fas fa-info-circle mr-2"></i>Hakkımda Sayfası</h1>
+        <a href="/about" class="btn btn-light btn-sm" target="_blank"><i class="fas fa-external-link-alt mr-1"></i> Görüntüle</a>
     </div>
 </header>
 
@@ -52,41 +48,30 @@
     <div class="container">
         <div class="card shadow-sm">
             <div class="card-body">
-                <form method="POST" enctype="multipart/form-data">
+                <form method="POST">
                     {{ form.hidden_tag() }}
 
                     <div class="form-group">
-                        <label>{{ form.title.label.text }} <span class="text-danger">*</span></label>
-                        {{ form.title(class="form-control" + (" is-invalid" if form.title.errors else ""), placeholder="Yazı başlığı") }}
-                        {% for e in form.title.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label>{{ form.cat.label.text }}</label>
-                            {{ form.cat(class="form-control") }}
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label>{{ form.resim.label.text }} (opsiyonel)</label>
-                            {{ form.resim(class="form-control-file") }}
-                            {% if post and post.resim %}
-                            <small class="text-muted">Mevcut: {{ post.resim }}</small>
-                            {% endif %}
-                        </div>
+                        <label>{{ form.hk.label.text }} (Sayfa Başlığı)</label>
+                        {{ form.hk(class="form-control" + (" is-invalid" if form.hk.errors else ""), placeholder="örn: Hakkımda") }}
+                        {% for e in form.hk.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
                     </div>
 
                     <div class="form-group">
-                        <label>{{ form.content.label.text }} <span class="text-danger">*</span></label>
-                        {{ form.content(class="form-control" + (" is-invalid" if form.content.errors else ""), id="editor_update", rows="10") }}
-                        {% for e in form.content.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
+                        <label>{{ form.cat.label.text }}</label>
+                        {{ form.cat(class="form-control") }}
                     </div>
 
-                    <div class="d-flex">
-                        <button type="submit" class="btn btn-primary mr-2">
-                            <i class="fas fa-save mr-1"></i> Güncelle
-                        </button>
-                        <a href="/panel/home" class="btn btn-secondary">İptal</a>
+                    <div class="form-group">
+                        <label>{{ form.hkm.label.text }} (Sayfa İçeriği)</label>
+                        {{ form.hkm(class="form-control" + (" is-invalid" if form.hkm.errors else ""), id="about_content", rows="8") }}
+                        {% for e in form.hkm.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
                     </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save mr-1"></i> Güncelle
+                    </button>
+                    <a href="/panel/home" class="btn btn-secondary ml-2">İptal</a>
                 </form>
             </div>
         </div>
@@ -96,8 +81,6 @@
 <script src="{{ url_for('static', filename='/js/jquery-3.3.1.min.js') }}"></script>
 <script src="{{ url_for('static', filename='/js/bootstrap.min.js') }}"></script>
 <script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
-<script>
-    CKEDITOR.replace('editor_update');
-</script>
+<script>CKEDITOR.replace('about_content');</script>
 </body>
 </html>
