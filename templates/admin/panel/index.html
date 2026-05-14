@@ -27,6 +27,12 @@
                 <li class="nav-item px-2">
                     <a href="/panel/about/" class="nav-link"><i class="fas fa-user mr-1"></i> Hakkımda</a>
                 </li>
+                <li class="nav-item px-2">
+                    <a href="/panel/categories" class="nav-link"><i class="fas fa-folder mr-1"></i> Kategoriler</a>
+                </li>
+                <li class="nav-item px-2">
+                    <a href="/panel/settings" class="nav-link"><i class="fas fa-cog mr-1"></i> Ayarlar</a>
+                </li>
             </ul>
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item dropdown mr-3">
@@ -155,10 +161,9 @@
                         <div class="form-group col-md-6">
                             <label>Kategori</label>
                             <select name="cat" class="form-control">
-                                <option value="Teknoloji">Teknoloji</option>
-                                <option value="Programlama">Programlama</option>
-                                <option value="Siber Güvenlik">Siber Güvenlik</option>
-                                <option value="Genel">Genel</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat.name }}">{{ cat.name }}</option>
+                                {% endfor %}
                             </select>
                         </div>
                         <div class="form-group col-md-6">
@@ -182,7 +187,7 @@
 
 <script src="{{ url_for('static', filename='/js/jquery-3.3.1.min.js') }}"></script>
 <script src="{{ url_for('static', filename='/js/bootstrap.min.js') }}"></script>
-<script src="https://cdn.ckeditor.com/4.13.1/standard/ckeditor.js"></script>
+<script src="https://cdn.ckeditor.com/4.25.1-lts/standard/ckeditor.js"></script>
 <script>
     if (document.getElementById('modal_content')) {
         CKEDITOR.replace('modal_content');

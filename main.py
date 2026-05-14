@@ -7,7 +7,7 @@ from flask_bcrypt import Bcrypt
 from flask_wtf.csrf import CSRFProtect
 
 from config import Config
-from models import db, User, Post, About, Setting
+from models import db, User, Post, About, Setting, Category
 from forms import LoginForm, PostForm, ProfileForm, AboutForm
 
 # ─────────────────────────── App & Extensions ────────────────────────────────
@@ -97,13 +97,15 @@ def logout():
 @login_required
 def admin():
     posts = Post.query.order_by(Post.date.desc()).all()
-    return render_template('admin/panel/index.html', posts=posts)
+    cats = Category.query.all()
+    return render_template('admin/panel/index.html', posts=posts, categories=cats)
 
 
 @app.route('/panel/ekle/', methods=['GET', 'POST'])
 @login_required
 def ekle():
     form = PostForm()
+    form.cat.choices = [(c.name, c.name) for c in Category.query.all()]
     if form.validate_on_submit():
         resim_fn = ''
         if form.resim.data and form.resim.data.filename:
@@ -127,6 +129,7 @@ def ekle():
 def edit(post_id):
     post = Post.query.get_or_404(post_id)
     form = PostForm()
+    form.cat.choices = [(c.name, c.name) for c in Category.query.all()]
     if form.validate_on_submit():
         post.title   = form.title.data
         post.content = form.content.data
@@ -215,6 +218,54 @@ def details(post_id):
     return render_template('admin/panel/details.html', deta=post)
 
 
+@app.route('/panel/categories', methods=['GET', 'POST'])
+@login_required
+def categories():
+    if request.method == 'POST':
+        cat_name = request.form.get('cat_name')
+        if cat_name:
+            if not Category.query.filter_by(name=cat_name).first():
+                new_cat = Category(name=cat_name)
+                db.session.add(new_cat)
+                db.session.commit()
+                flash('Kategori eklendi.', 'success')
+            else:
+                flash('Bu kategori zaten var.', 'danger')
+        return redirect(url_for('categories'))
+    cats = Category.query.all()
+    return render_template('admin/panel/categories.html', categories=cats)
+
+
+@app.route('/panel/categories/delete/<int:cat_id>')
+@login_required
+def delete_category(cat_id):
+    cat = Category.query.get_or_404(cat_id)
+    db.session.delete(cat)
+    db.session.commit()
+    flash('Kategori silindi.', 'info')
+    return redirect(url_for('categories'))
+
+
+@app.route('/panel/settings', methods=['GET', 'POST'])
+@login_required
+def settings():
+    setting = Setting.query.first()
+    if not setting:
+        setting = Setting(title='NF Blog', content='Siber Guvenlik', content2='')
+        db.session.add(setting)
+        db.session.commit()
+
+    if request.method == 'POST':
+        setting.title = request.form.get('title')
+        setting.content = request.form.get('content')
+        db.session.commit()
+        flash('Ayarlar güncellendi.', 'success')
+        return redirect(url_for('settings'))
+
+    return render_template('admin/panel/settings.html', setting=setting)
+
+
+
 # ─────────────────────────── Error Handlers ──────────────────────────────────
 @app.errorhandler(404)
 def page_not_found(e):
@@ -264,6 +315,12 @@ def init_db():
             content2 = 'NF Blog',
         )
         db.session.add(setting)
+        db.session.commit()
+
+    if not Category.query.first():
+        default_cats = ['Teknoloji', 'Programlama', 'Siber Güvenlik', 'Genel']
+        for c in default_cats:
+            db.session.add(Category(name=c))
         db.session.commit()
 
     print('[NF Blog] Veritabani hazir.')
